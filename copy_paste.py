@@ -270,7 +270,8 @@ def copy_paste_class(dataset_class):
                     msg += "Expected bbox format is (a, b, c, d, label_field)"
                     raise Exception(msg)
             if 'keypoints' in self.transforms.processors:
-                keypoint_params = self.transforms.processors['keypoints'].params
+                keypoint_params = self.transforms.processors[
+                    'keypoints'].params
                 paste_additional_targets['paste_keypoints'] = 'keypoints'
                 if keypoint_params.label_fields:
                     raise Exception('Copy-paste does not support keypoint label fields!')
@@ -279,8 +280,10 @@ def copy_paste_class(dataset_class):
                 raise Exception('Copy-paste does not support additional_targets!')
 
             #recreate transforms
-            self.transforms = A.Compose(pre_copy, bbox_params, keypoint_params, additional_targets=None)
-            self.post_transforms = A.Compose(post_copy, bbox_params, keypoint_params, additional_targets=None)
+            self.transforms = A.Compose(pre_copy, bbox_params,
+                                         keypoint_params, additional_targets=None)
+            self.post_transforms = A.Compose(post_copy, bbox_params,
+                                              keypoint_params, additional_targets=None)
             self.copy_paste = A.Compose(
                 [copy_paste], bbox_params, keypoint_params, additional_targets=paste_additional_targets
             )
@@ -295,7 +298,7 @@ def copy_paste_class(dataset_class):
 
         img_data = self.load_example(idx)
         if self.copy_paste is not None:
-            paste_idx = random.randint(0, self.__len__() - 1)
+            paste_idx = random.randint(0, self.c.__len__() - 1)
             paste_img_data = self.load_example(paste_idx)
             for k in list(paste_img_data.keys()):
                 paste_img_data['paste_' + k] = paste_img_data[k]
