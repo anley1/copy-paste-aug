@@ -247,6 +247,11 @@ class CopyPaste(A.DualTransform):
 
 def copy_paste_class(dataset_class):
     def _split_transforms(self):
+        # This determines if there is a 'CopyPaste' transform in the
+        # list of transforms, and will split the transforms such that
+        # the CopyPaste transform (tf) will occur last.
+
+        # Determine the index of CopyPaste tf (if it exists)
         split_index = None
         for ix, tf in enumerate(list(self.transforms.transforms)):
             if tf.get_class_fullname() == 'copypaste.CopyPaste':
@@ -296,7 +301,7 @@ def copy_paste_class(dataset_class):
         if not hasattr(self, 'post_transforms'):
             self._split_transforms()
 
-        img_data = self.load_example(idx)
+        img_data = self.load_example(idx, scene=True)
         if self.copy_paste is not None:
             paste_idx = random.randint(0, self.c.__len__() - 1)
             paste_img_data = self.load_example(paste_idx)

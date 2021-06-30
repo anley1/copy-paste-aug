@@ -41,6 +41,7 @@ class CocoDetectionCP():
         # super(CocoDetectionCP, self).__init__(
         #     sceneRoot, objectRoot, annFile, None, None, transforms
         # )
+        self.sceneRoot = sceneRoot
         self.objectRoot = objectRoot
         self.transforms = transforms
         self.c = CocoDetection(objectRoot, annFile, transforms)
@@ -57,13 +58,25 @@ class CocoDetectionCP():
                 ids.append(img_id)
         self.ids = ids
 
-    def load_example(self, index):
+        self.scene_names = [filename for
+                            filename in os.listdir(self.sceneRoot)]
+
+    def load_example(self, index, scene=False):
+        """
+        Load an example with annotations.
+        index:: (int) the index of the image from ids
+        scene:: (bool) to load from an empty scene or not.
+        """
         img_id = self.c.ids[index]
         ann_ids = self.c.coco.getAnnIds(imgIds=img_id)
         target = self.c.coco.loadAnns(ann_ids)
 
-        path = self.c.coco.loadImgs(img_id)[0]['file_name']
-        total_path = os.path.abspath(os.path.join(self.c.root, path))
+        if scene:
+            scene_path = self.scene_names[index]
+            total_path = os.path.abspath(os.path.join(self.sceneRoot, scene_path))
+        else:
+            path = self.c.coco.loadImgs(img_id)[0]['file_name']
+            total_path = os.path.abspath(os.path.join(self.c.root, path))
         image = cv2.imread(total_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
