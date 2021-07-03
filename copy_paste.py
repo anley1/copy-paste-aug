@@ -5,6 +5,7 @@ import numpy as np
 import albumentations as A
 from copy import deepcopy
 from skimage.filters import gaussian
+from math import ceil
 
 def image_copy_paste(img, paste_img, alpha, blend=True, sigma=1):
     if alpha is not None:
@@ -178,9 +179,18 @@ class CopyPaste(A.DualTransform):
             #the last label in bboxes is the index of corresponding mask
             mask_indices = [bbox[-1] for bbox in bboxes]
 
+        # Select a random number of masks to paste
+        # ceil(len(mask_indices)/3)
+        masks_to_paste = np.random.choice(
+            range(0, len(mask_indices)), size=1,
+            replace=False)
+
+        sub_mask_indices = [idx for idx in masks_to_paste]
+
         #create alpha by combining all the objects into
         #a single binary mask
-        masks = [masks[idx] for idx in mask_indices]
+        #masks = [masks[idx] for idx in mask_indices]
+        masks = [masks[idx] for idx in sub_mask_indices]
 
         alpha = masks[0] > 0
         for mask in masks[1:]:
@@ -303,7 +313,8 @@ def copy_paste_class(dataset_class):
 
         img_data = self.load_example(idx, scene=True)
         if self.copy_paste is not None:
-            paste_idx = random.randint(0, self.c.__len__() - 1)
+            # paste_idx = random.randint(0, self.c.__len__() - 1)
+            paste_idx = 12  # hardcode for testing
             paste_img_data = self.load_example(paste_idx)
             for k in list(paste_img_data.keys()):
                 paste_img_data['paste_' + k] = paste_img_data[k]
