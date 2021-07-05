@@ -7,7 +7,7 @@ import albumentations as A
 import random
 from matplotlib import pyplot as plt
 
-transform = A.Compose([
+transformScene = A.Compose([
         #A.RandomScale(scale_limit=(-0.9, 1), p=1), #LargeScaleJitter from scale of 0.1 to 2
         A.PadIfNeeded(256, 256, border_mode=0), #pads with image in the center, not the top left like the paper
         A.Resize(800, 1333, always_apply=True, p=1),
@@ -15,6 +15,16 @@ transform = A.Compose([
         #A.Resize(800, 1333, always_apply=True, p=1),
         CopyPaste(blend=True, sigma=1, pct_objects_paste=0.8, p=1.) #pct_objects_paste is a guess
     ], bbox_params=A.BboxParams(format="coco", min_visibility=0.05)
+)
+
+transform = A.Compose([
+        #A.RandomScale(scale_limit=(-0.9, 1), p=1), #LargeScaleJitter from scale of 0.1 to 2
+        A.PadIfNeeded(256, 256, border_mode=0), #pads with image in the center, not the top left like the paper
+        A.Resize(800, 1333, always_apply=True, p=1),
+        A.RandomCrop(200, 400),
+        #A.Resize(800, 1333, always_apply=True, p=1),
+        CopyPaste(blend=True, sigma=1, pct_objects_paste=0.8, p=1.) #pct_objects_paste is a guess
+    ], bbox_params=A.BboxParams(format="coco")
 )
 
 #data = CocoDetectionCP(
@@ -26,7 +36,8 @@ data = CocoDetectionCP(
     '../Swin-Transformer-Object-Detection/data/flooding_high',
     '../agilent-repos/mmdetection/data/bead_cropped_detection/images',
     '../Swin-Transformer-Object-Detection/data/bead_cropped_detection/traintype2lower.json',
-    transform
+    transform,
+    transformScene
 )
 
 f, ax = plt.subplots(1, 2, figsize=(16, 16))

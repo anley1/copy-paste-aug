@@ -36,7 +36,8 @@ class CocoDetectionCP():
         sceneRoot,  # Image files (empty scene)
         objectRoot,  # Image files (contains annotation objects in scene)
         annFile,  # Annotations file
-        transforms  # List of transforms
+        transforms,  # List of transforms for objs
+        transformScene  # List of transforms for the scenes
     ):
         # super(CocoDetectionCP, self).__init__(
         #     sceneRoot, objectRoot, annFile, None, None, transforms
@@ -44,6 +45,7 @@ class CocoDetectionCP():
         self.sceneRoot = sceneRoot
         self.objectRoot = objectRoot
         self.transforms = transforms
+        self.transformScenes = transformScene
         self.c = CocoDetection(objectRoot, annFile, transforms)
 
 
@@ -94,5 +96,8 @@ class CocoDetectionCP():
             'masks': masks,
             'bboxes': bboxes
         }
-        
+
+        if scene:
+            return self.transformScenes(**output)
+        # Otherwise for objects
         return self.transforms(**output)

@@ -182,7 +182,7 @@ class CopyPaste(A.DualTransform):
         # Select a random number of masks to paste
         # ceil(len(mask_indices)/3)
         masks_to_paste = np.random.choice(
-            range(0, len(mask_indices)), size=1,
+            range(0, len(mask_indices)), size=3,
             replace=False)
 
         sub_mask_indices = [idx for idx in masks_to_paste]
