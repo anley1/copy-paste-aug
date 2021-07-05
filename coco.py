@@ -86,9 +86,10 @@ class CocoDetectionCP():
         #bboxes are expected to be (y1, x1, y2, x2, category_id)
         masks = []
         bboxes = []
-        for ix, obj in enumerate(target):
-            masks.append(self.c.coco.annToMask(obj))
-            bboxes.append(obj['bbox'] + [obj['category_id']] + [ix])
+        if not scene:
+            for ix, obj in enumerate(target):
+                masks.append(self.c.coco.annToMask(obj))
+                bboxes.append(obj['bbox'] + [obj['category_id']] + [ix])
 
         #pack outputs into a dict
         output = {
