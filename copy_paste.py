@@ -71,14 +71,18 @@ def bboxes_copy_paste(bboxes, paste_bboxes, masks, paste_masks, alpha, key):
     if key == 'paste_bboxes':
         return bboxes
     elif paste_bboxes is not None:
-        masks = masks_copy_paste(masks, paste_masks=[], alpha=alpha)
-        adjusted_bboxes = extract_bboxes(masks)
+        # Copy the masks from secondary to scene
+        # masks = masks_copy_paste(masks, paste_masks=paste_masks, alpha=alpha)
+        # Adjust bboxes to reflect this copy-paste. These are all bboxes
+        # attached to those masks.
+        # adjusted_bboxes = extract_bboxes(masks)
 
-        #only keep the bounding boxes for objects listed in bboxes
-        mask_indices = [box[-1] for box in bboxes]
-        adjusted_bboxes = [adjusted_bboxes[idx] for idx in mask_indices]
-        #append bbox tails (classes, etc.)
-        adjusted_bboxes = [bbox + tail[4:] for bbox, tail in zip(adjusted_bboxes, bboxes)]
+        # only keep the bounding boxes for objects listed in bboxes
+        # mask_indices = [box[-1] for box in bboxes]
+        # adjusted_bboxes = [adjusted_bboxes[idx] for idx in mask_indices]
+        # append bbox tails (classes, etc.)
+        # adjusted_bboxes = [bbox + tail[4:] for bbox, tail in zip(
+        # adjusted_bboxes, bboxes)]
 
         #adjust paste_bboxes mask indices to avoid overlap
         if len(masks) > 0:
@@ -91,7 +95,8 @@ def bboxes_copy_paste(bboxes, paste_bboxes, masks, paste_masks, alpha, key):
         adjusted_paste_bboxes = extract_bboxes(paste_masks)
         adjusted_paste_bboxes = [apbox + tail[4:] for apbox, tail in zip(adjusted_paste_bboxes, paste_bboxes)]
 
-        bboxes = adjusted_bboxes + adjusted_paste_bboxes
+        # bboxes = adjusted_bboxes + adjusted_paste_bboxes
+        bboxes = adjusted_paste_bboxes
 
     return bboxes
 
@@ -195,7 +200,7 @@ class CopyPaste(A.DualTransform):
         # Select a random number of masks to paste
         # ceil(len(mask_indices)/3)
         masks_to_paste = np.random.choice(
-            range(0, len(mask_indices)), size=3,
+            range(0, len(mask_indices)), size=n_select,
             replace=False)
 
         sub_mask_indices = [idx for idx in masks_to_paste]
