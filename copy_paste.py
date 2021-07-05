@@ -55,6 +55,19 @@ def extract_bboxes(masks):
     return bboxes
 
 def bboxes_copy_paste(bboxes, paste_bboxes, masks, paste_masks, alpha, key):
+    """
+    Copy and Paste the bboxes of the scene image (bboxes) and the pasted
+    bboxes (paste_bboxes, paste_masks).
+
+    @param bboxes: scene bboxes
+    @param paste_bboxes: bboxes from the secondary image
+    @param masks: the masks from the scene
+    @param paste_masks: the masks from the secondary image
+    @param alpha: the mask array of True-False
+    @param key: identifier key for if the operation is needed
+    @return: the resultant bboxes for the combined product of scene and
+    secondary.
+    """
     if key == 'paste_bboxes':
         return bboxes
     elif paste_bboxes is not None:
@@ -314,7 +327,7 @@ def copy_paste_class(dataset_class):
         img_data = self.load_example(idx, scene=True)
         if self.copy_paste is not None:
             # paste_idx = random.randint(0, self.c.__len__() - 1)
-            paste_idx = 12  # hardcode for testing
+            paste_idx = 5  # hardcode for testing
             paste_img_data = self.load_example(paste_idx)
             for k in list(paste_img_data.keys()):
                 paste_img_data['paste_' + k] = paste_img_data[k]
