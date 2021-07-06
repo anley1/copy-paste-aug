@@ -40,7 +40,7 @@ transform = A.Compose([
 #    transform
 #)
 data = CocoDetectionCP(
-    '../Swin-Transformer-Object-Detection/data/flooding_high',
+    '../Swin-Transformer-Object-Detection/data/flooding_high_cropped',
     # '../agilent-repos/mmdetection/data/bead_cropped_detection/images',
     #'../Swin-Transformer-Object-Detection/data/bead_cropped_detection/traintype2lower.json',
     '../Swin-Transformer-Object-Detection/data/beading_basler',
@@ -60,8 +60,10 @@ masks = img_data['masks']
 bboxes = img_data['bboxes']
 new_anno = img_data['annotation']
 
-with open('newj.json', 'w') as j_file:
+with open('aug_one.json', 'w') as j_file:
     json.dump(new_anno, j_file, indent=4)
+
+cv2.imwrite("Basler_acA2440-35um__23336827__20201014_102933834_103.tiff", image)
 
 empty = np.array([])
 display_instances(image, empty, empty, empty, empty, show_mask=False, show_bbox=False, ax=ax[0])

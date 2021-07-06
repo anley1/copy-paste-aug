@@ -350,11 +350,11 @@ def copy_paste_class(dataset_class):
 
             # Get COCO ann format data
             licenses = copy.deepcopy(self.c.coco.dataset['licenses'])
-            categories = [copy.deepcopy(self.c.coco.cats)]
+            categories = [copy.deepcopy(self.c.coco.cats[1])]
             im_meta = {
                 "id": scene_id,
-                "width": combine_data['image'].shape[0],
-                "height": combine_data['image'].shape[1],
+                "width": combine_data['image'].shape[1],
+                "height": combine_data['image'].shape[0],
                 "file_name": self.scene_names[scene_id],
                 "license": None,
                 "flickr_url": "",
@@ -384,12 +384,12 @@ def copy_paste_class(dataset_class):
                 area = int(maskUtils.area(paste_rle))
                 bbox = maskUtils.toBbox(paste_rle)
                 bbox = bbox.tolist()  # ndarray to list
-                # bbox = [int(i) for i in bbox]
+                bbox = [int(i) for i in bbox]
 
                 new_ann = {
                     "id": ix,
                     "image_id": scene_id,
-                    "category_id": categories[0][1]['id'],  # 1 == beading
+                    "category_id": categories[0]['id'],  # 1 == beading
                     "segmentation": paste_rle,
                     "area": area,
                     "bbox": bbox,
