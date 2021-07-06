@@ -1,5 +1,5 @@
-# Copy-Paste
-Unofficial implementation of the copy-paste augmentation from [Simple Copy-Paste is a Strong Data Augmentation Method for Instance Segmentation](https://arxiv.org/abs/2012.07177v1).
+# Scene-Copy-Paste
+Unofficial implementation of the copy-paste augmentation from [Simple Copy-Paste is a Strong Data Augmentation Method for Instance Segmentation](https://arxiv.org/abs/2012.07177v1), adapted to paste object instances from an image onto an empty scene. Inspiration from [Cut, Paste and Learn: Surprisingly Easy Synthesis for Instance Detection](https://arxiv.org/abs/1708.01642).
 
 The augmentation function is built to integrate easily with albumentations. An example for creating a compatible torchvision dataset is given for COCO. Core functionality for image, masks, and bounding boxes is finished; keypoints are not yet supported. In general, you can use the CopyPaste augmentation just as you would any other albumentations augmentation function. There are a few usage limitations of note.
 
