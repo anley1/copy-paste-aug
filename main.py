@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import json
 from copy_paste import CopyPaste
 from coco import CocoDetectionCP
 from visualize import display_instances
@@ -27,7 +28,8 @@ transform = A.Compose([
         #A.Solarize(always_apply=True, p=1.0, threshold=(128, 128)),
         A.RandomCrop(534, 889),
         #A.Resize(800, 1333, always_apply=True, p=1),
-        CopyPaste(blend=True, sigma=1, pct_objects_paste=0.8, p=1.) #pct_objects_paste is a guess
+        # pct_objects is the percentage of objects to paste over
+        CopyPaste(blend=True, sigma=1, pct_objects_paste=1, p=1.)
     ], bbox_params=A.BboxParams(format="coco")
 )
 
@@ -56,6 +58,10 @@ img_data = data[index]
 image = img_data['image']
 masks = img_data['masks']
 bboxes = img_data['bboxes']
+new_anno = img_data['annotation']
+
+with open('newj.json', 'w') as j_file:
+    json.dump(new_anno, j_file, indent=4)
 
 empty = np.array([])
 display_instances(image, empty, empty, empty, empty, show_mask=False, show_bbox=False, ax=ax[0])

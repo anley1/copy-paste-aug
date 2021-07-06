@@ -63,7 +63,7 @@ class CocoDetectionCP():
         self.scene_names = [filename for
                             filename in os.listdir(self.sceneRoot)]
 
-    def load_example(self, index, scene=False):
+    def load_example(self, index, scene=False, scene_index=5):
         """
         Load an example with annotations.
         index:: (int) the index of the image from ids
@@ -74,7 +74,7 @@ class CocoDetectionCP():
         target = self.c.coco.loadAnns(ann_ids)
 
         if scene:
-            scene_path = self.scene_names[index]
+            scene_path = self.scene_names[scene_index]
             total_path = os.path.abspath(os.path.join(self.sceneRoot, scene_path))
         else:
             path = self.c.coco.loadImgs(img_id)[0]['file_name']

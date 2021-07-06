@@ -1,11 +1,14 @@
 import os
 import cv2
 import random
+import copy
 import numpy as np
 import albumentations as A
 from copy import deepcopy
 from skimage.filters import gaussian
 from math import ceil
+from datetime import datetime
+from pycocotools import mask as maskUtils
 
 def image_copy_paste(img, paste_img, alpha, blend=True, sigma=1):
     if alpha is not None:
@@ -329,7 +332,10 @@ def copy_paste_class(dataset_class):
         if not hasattr(self, 'post_transforms'):
             self._split_transforms()
 
-        img_data = self.load_example(idx, scene=True)
+        # Scene image data
+        scene_id = idx
+        scene_data = self.load_example(idx, scene=True, scene_index=scene_id)
+
         if self.copy_paste is not None:
             # paste_idx = random.randint(0, self.c.__len__() - 1)
             paste_idx = 5  # hardcode for testing
@@ -338,11 +344,94 @@ def copy_paste_class(dataset_class):
                 paste_img_data['paste_' + k] = paste_img_data[k]
                 del paste_img_data[k]
 
-            img_data = self.copy_paste(**img_data, **paste_img_data)
-            img_data = self.post_transforms(**img_data)
-            img_data['paste_index'] = paste_idx
+            combine_data = self.copy_paste(**scene_data, **paste_img_data)
+            combine_data = self.post_transforms(**combine_data)
+            combine_data['paste_index'] = paste_idx
 
-        return img_data
+            # Get COCO ann format data
+            licenses = copy.deepcopy(self.c.coco.dataset['licenses'])
+            categories = [copy.deepcopy(self.c.coco.cats)]
+            im_meta = {
+                "id": scene_id,
+                "width": combine_data['image'].shape[0],
+                "height": combine_data['image'].shape[1],
+                "file_name": self.scene_names[scene_id],
+                "license": None,
+                "flickr_url": "",
+                "coco_url": None,
+                "date_captured": str(datetime.now())
+            }
+            images = [im_meta]
+
+            # attempt to get RLE counts for each of the transformed masks
+            # in the combined data:
+            new_anns = []
+            rle_masks = []
+
+            # There are as many annotations as there are pasted masks
+            for ix, paste_mask in enumerate(combine_data['masks']):
+                # to Fortran contiguous
+                # See: https://github.com/cocodataset/cocoapi/issues/91
+                contig_mask = np.asfortranarray(paste_mask)
+                paste_rle = maskUtils.encode(contig_mask)
+                # In Python3
+                # See: https://github.com/cocodataset/cocoapi/issues/70
+                paste_rle['counts'] = paste_rle['counts'].decode('ascii')
+
+                rle_masks.append(paste_rle)
+
+                # areas
+                area = int(maskUtils.area(paste_rle))
+                bbox = maskUtils.toBbox(paste_rle)
+                bbox = bbox.tolist()  # ndarray to list
+                # bbox = [int(i) for i in bbox]
+
+                new_ann = {
+                    "id": ix,
+                    "image_id": scene_id,
+                    "category_id": categories[0][1]['id'],  # 1 == beading
+                    "segmentation": paste_rle,
+                    "area": area,
+                    "bbox": bbox,
+                    "iscrowd": 0  # always for individual instance seg.
+                }
+                new_anns.append(new_ann)
+
+            combine_ann = {
+                "licenses": licenses,
+                "categories": categories,
+                "images": images,
+                "annotations": new_anns,
+            }
+
+            combine_data['annotation'] = combine_ann
+
+
+        # Required annotation file format |-> source
+        # info (dict) |-> original ann
+        # licenses [] |-> original ann
+        # categories [(dict)] |-> original ann
+        # images [(dict)]: scene image ann
+        #       - get following info after transforms. Keys are str
+        #       - id:
+        #       - width: px
+        #       - height: px
+        #       - file_name: str
+        #       - license: null
+        #       - flickr_url: ""
+        #       - coco_url: null
+        #       - date_captured: system.date()
+        # annotations [(dict)]: original ann after transforms
+        #       - id: unique
+        #       - image_id: (corresponding image id, scene)
+        #       - category_id: 1 (beading)
+        #       - segmentation (dict):
+        #           - size: after tf
+        #           - counts (str): RLE of mask
+        #           - area (num): after tf
+        #           - bbox [len(4)]
+        #           - iscrowd: 0 (for all)
+        return combine_data
 
     setattr(dataset_class, '_split_transforms', _split_transforms)
     setattr(dataset_class, '__getitem__', __getitem__)
