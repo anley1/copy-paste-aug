@@ -56,8 +56,9 @@ class CocoDetectionCP():
         for img_id in self.c.ids:
             ann_ids = self.c.coco.getAnnIds(imgIds=img_id, iscrowd=None)
             anno = self.c.coco.loadAnns(ann_ids)
-            if has_valid_annotation(anno):
-                ids.append(img_id)
+            #if has_valid_annotation(anno):
+            #    ids.append(img_id)
+            ids.append(img_id)
         self.ids = ids
 
         self.scene_names = [filename for
