@@ -76,8 +76,8 @@ class CocoDetectionCP():
 
     def __len__(self):
         # Override the len function.
-        # return: number of images with annotations in the COCO class.
-        return len(self.c)
+        # return: number of scene images.
+        return len(self.scene_names)
 
     def _split_transforms(self):
         # This determines if there is a 'CopyPaste' transform in the
