@@ -56,7 +56,6 @@ class CocoDetectionCP():
         self.transformScenes = transformScene
         self.c = CocoDetection(objectRoot, annFile, transforms)
         self.json_base = self.init_json()
-        self.albu_images = []  # store of the cv2 edited images
 
 
         # Get filenames in the root directory
@@ -164,6 +163,7 @@ class CocoDetectionCP():
                 "coco_url": None,
                 "date_captured": str(datetime.now())
             }
+            combine_data['filename'] = im_meta['file_name']
             # images = [im_meta]
             self.add_img_json(im_meta)
 
@@ -237,7 +237,7 @@ class CocoDetectionCP():
         #           - area (num): after tf
         #           - bbox [len(4)]
         #           - iscrowd: 0 (for all)
-        self.add_image(combine_data['image'])
+        # self.add_image(combine_data['image'])
         return combine_data
 
     def load_example(self, index, scene=False, scene_index=5):
@@ -246,27 +246,28 @@ class CocoDetectionCP():
         index:: (int) the index of the image from ids
         scene:: (bool) to load from an empty scene or not.
         """
-        img_id = self.c.ids[index]
-        ann_ids = self.c.coco.getAnnIds(imgIds=img_id)
-        target = self.c.coco.loadAnns(ann_ids)
+        masks = []
+        bboxes = []
 
         if scene:
             scene_path = self.scene_names[scene_index]
             total_path = os.path.abspath(os.path.join(self.sceneRoot, scene_path))
         else:
+            img_id = self.c.ids[index]
+            ann_ids = self.c.coco.getAnnIds(imgIds=img_id)
+            target = self.c.coco.loadAnns(ann_ids)
+
             path = self.c.coco.loadImgs(img_id)[0]['file_name']
             total_path = os.path.abspath(os.path.join(self.c.root, path))
-        image = cv2.imread(total_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        #convert all of the target segmentations to masks
-        #bboxes are expected to be (y1, x1, y2, x2, category_id)
-        masks = []
-        bboxes = []
-        if not scene:
+            # convert all of the target segmentations to masks
+            # bboxes are expected to be (y1, x1, y2, x2, category_id)
             for ix, obj in enumerate(target):
                 masks.append(self.c.coco.annToMask(obj))
                 bboxes.append(obj['bbox'] + [obj['category_id']] + [ix])
+
+        image = cv2.imread(total_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         #pack outputs into a dict
         output = {
@@ -332,15 +333,26 @@ class CocoDetectionCP():
         @param out_dir: (str) directory to store
         @return:
         """
-        out_path = os.path.join(out_dir, Path(f_name).name)
+
+        # Check that the directory exists, otherwise make it.
+        Path(out_dir).mkdir(parents=True, exist_ok=True)
+
+        out_path = os.path.join(out_dir, Path(f_name).name + ".jpg")
+        print(out_path)
         cv2.imwrite(out_path, img)
 
-    def add_image(self, img):
+    def synthesize(self, json_name="aug.json"):
         """
-        Add a cv2 image to the class store. This does not store on the file-
-        system.
-
-        @param img: cv2 image array
+        Method for creating the synthetic dataset from the scene images and
+        other, annotated image set. Requires that class is initialised.
         @return: None
         """
-        self.albu_images.append(img)
+        for idx in range(len(self)):
+            # len(self) is the number of scene images
+            img_data = self[idx]
+            # Save image
+            self.download_img(img=img_data['image'],
+                              f_name=img_data['filename'],
+                              out_dir="out_img/")
+
+        self.write_json(json_name)
