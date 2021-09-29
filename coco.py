@@ -154,7 +154,7 @@ class CocoDetectionCP():
 
             # Get COCO ann format data
             licenses = copy.deepcopy(self.c.coco.dataset['licenses'])
-            categories = [copy.deepcopy(self.c.coco.cats)]
+            categories = copy.deepcopy(self.c.coco.dataset['categories'])
             im_meta = {
                 "id": scene_id,
                 "width": combine_data['image'].shape[1],
@@ -197,7 +197,8 @@ class CocoDetectionCP():
                 new_ann = {
                     "id": self.anno_counter,
                     "image_id": scene_id,
-                    "category_id": combine_data['bboxes'][paste_count][-2],
+                    "category_id": paste_img_data['paste_bboxes'][paste_count][
+                        -2],
                     "segmentation": paste_rle,
                     "area": area,
                     "bbox": bbox,
@@ -298,7 +299,7 @@ class CocoDetectionCP():
         """
         return {
             "licenses": copy.deepcopy(self.c.coco.dataset['licenses']),
-            "categories": [copy.deepcopy(self.c.coco.cats)],
+            "categories": copy.deepcopy(self.c.coco.dataset['categories']),
             "images": [],
             "annotations": []
         }
