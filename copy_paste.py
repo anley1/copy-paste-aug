@@ -5,7 +5,7 @@ import copy
 import numpy as np
 import albumentations as A
 from copy import deepcopy
-from skimage.filters import gaussian, poisson
+from skimage.filters import gaussian
 from math import ceil
 from datetime import datetime
 from pycocotools import mask as maskUtils
@@ -16,8 +16,8 @@ def image_copy_paste(img, paste_img, alpha, blend=True, sigma=1, gray=False):
             alpha = gaussian(alpha, sigma=sigma, preserve_range=True)
 
         img_dtype = img.dtype
-        #if gray:
-        # alpha = alpha[..., None]  # Add third dimension if needed
+        if not gray:
+            alpha = alpha[..., None]  # Add third dimension if needed
         img = paste_img * alpha + img * (1 - alpha)
         img = img.astype(img_dtype)
 

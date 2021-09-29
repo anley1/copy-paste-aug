@@ -154,7 +154,7 @@ class CocoDetectionCP():
 
             # Get COCO ann format data
             licenses = copy.deepcopy(self.c.coco.dataset['licenses'])
-            categories = [copy.deepcopy(self.c.coco.cats[1])]
+            categories = [copy.deepcopy(self.c.coco.cats)]
             im_meta = {
                 "id": scene_id,
                 "width": combine_data['image'].shape[1],
@@ -176,6 +176,7 @@ class CocoDetectionCP():
             rle_masks = []
 
             # There are as many annotations as there are pasted masks
+            paste_count = 0
             for paste_mask in combine_data['masks']:
                 # to Fortran contiguous
                 # See: https://github.com/cocodataset/cocoapi/issues/91
@@ -196,7 +197,7 @@ class CocoDetectionCP():
                 new_ann = {
                     "id": self.anno_counter,
                     "image_id": scene_id,
-                    "category_id": categories[0]['id'],  # 1 == beading
+                    "category_id": combine_data['bboxes'][paste_count][-2],
                     "segmentation": paste_rle,
                     "area": area,
                     "bbox": bbox,
@@ -205,6 +206,7 @@ class CocoDetectionCP():
                 # new_anns.append(new_ann)
                 self.add_anno_json(new_ann)
                 self.anno_counter += 1  # Ensure unique count
+                paste_count += 1
 
             # Annotation for the new combined scene and target masks/bboxes.
             # combine_ann = {
@@ -296,7 +298,7 @@ class CocoDetectionCP():
         """
         return {
             "licenses": copy.deepcopy(self.c.coco.dataset['licenses']),
-            "categories": [copy.deepcopy(self.c.coco.cats[1])],
+            "categories": [copy.deepcopy(self.c.coco.cats)],
             "images": [],
             "annotations": []
         }
