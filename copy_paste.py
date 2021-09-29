@@ -10,13 +10,14 @@ from math import ceil
 from datetime import datetime
 from pycocotools import mask as maskUtils
 
-def image_copy_paste(img, paste_img, alpha, blend=True, sigma=1):
+def image_copy_paste(img, paste_img, alpha, blend=True, sigma=1, gray=False):
     if alpha is not None:
         if blend:
             alpha = gaussian(alpha, sigma=sigma, preserve_range=True)
 
         img_dtype = img.dtype
-        alpha = alpha[..., None]
+        if not gray:
+            alpha = alpha[..., None]  # Add third dimension if needed
         img = paste_img * alpha + img * (1 - alpha)
         img = img.astype(img_dtype)
 
@@ -125,7 +126,8 @@ class CopyPaste(A.DualTransform):
         pct_objects_paste=0.1,
         max_paste_objects=None,
         p=0.5,
-        always_apply=False
+        always_apply=False,
+        gray=False
     ):
         super(CopyPaste, self).__init__(always_apply, p)
         self.blend = blend
@@ -134,6 +136,7 @@ class CopyPaste(A.DualTransform):
         self.max_paste_objects = max_paste_objects
         self.p = p
         self.always_apply = always_apply
+        self.gray = gray
 
     @staticmethod
     def get_class_fullname():
@@ -252,7 +255,8 @@ class CopyPaste(A.DualTransform):
 
     def apply(self, img, paste_img, alpha, **params):
         return image_copy_paste(
-            img, paste_img, alpha, blend=self.blend, sigma=self.sigma
+            img, paste_img, alpha, blend=self.blend, sigma=self.sigma,
+            gray=self.gray
         )
 
     def apply_to_mask(self, mask, paste_mask, alpha, **params):

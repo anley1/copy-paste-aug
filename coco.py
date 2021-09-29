@@ -45,7 +45,8 @@ class CocoDetectionCP():
         objectRoot,  # Image files (contains annotation objects in scene)
         annFile,  # Annotations file
         transforms,  # List of transforms for objs
-        transformScene  # List of transforms for the scenes
+        transformScene,  # List of transforms for the scenes
+        gray=False
     ):
         # super(CocoDetectionCP, self).__init__(
         #     sceneRoot, objectRoot, annFile, None, None, transforms
@@ -56,7 +57,8 @@ class CocoDetectionCP():
         self.transformScenes = transformScene
         self.c = CocoDetection(objectRoot, annFile, transforms)
         self.json_base = self.init_json()
-
+        self.anno_counter = 0
+        self.gray = gray  # grayscale or not
 
         # Get filenames in the root directory
 
@@ -135,12 +137,13 @@ class CocoDetectionCP():
 
         # Scene image data
         scene_id = idx
-        scene_data = self.load_example(idx, scene=True, scene_index=scene_id)
+        scene_data = self.load_example(idx, scene=True, scene_index=scene_id,
+                                       gray=self.gray)
 
         if self.copy_paste is not None:
             paste_idx = random.randint(0, self.c.__len__() - 1)
             # paste_idx = 5  # hardcode for testing
-            paste_img_data = self.load_example(paste_idx)
+            paste_img_data = self.load_example(paste_idx, gray=self.gray)
             for k in list(paste_img_data.keys()):
                 paste_img_data['paste_' + k] = paste_img_data[k]
                 del paste_img_data[k]
@@ -151,13 +154,13 @@ class CocoDetectionCP():
 
             # Get COCO ann format data
             licenses = copy.deepcopy(self.c.coco.dataset['licenses'])
-            categories = [copy.deepcopy(self.c.coco.cats[1])]
+            categories = [copy.deepcopy(self.c.coco.cats)]
             im_meta = {
                 "id": scene_id,
                 "width": combine_data['image'].shape[1],
                 "height": combine_data['image'].shape[0],
                 #"file_name": self.scene_names[scene_id],
-                "file_name": 'combine_' + str(scene_id),
+                "file_name": 'combine_' + str(scene_id) + '.jpg',
                 "license": None,
                 "flickr_url": "",
                 "coco_url": None,
@@ -173,7 +176,8 @@ class CocoDetectionCP():
             rle_masks = []
 
             # There are as many annotations as there are pasted masks
-            for ix, paste_mask in enumerate(combine_data['masks']):
+            paste_count = 0
+            for paste_mask in combine_data['masks']:
                 # to Fortran contiguous
                 # See: https://github.com/cocodataset/cocoapi/issues/91
                 contig_mask = np.asfortranarray(paste_mask)
@@ -191,9 +195,9 @@ class CocoDetectionCP():
                 bbox = [int(i) for i in bbox]
 
                 new_ann = {
-                    "id": ix,
+                    "id": self.anno_counter,
                     "image_id": scene_id,
-                    "category_id": categories[0]['id'],  # 1 == beading
+                    "category_id": combine_data['bboxes'][paste_count][-2],
                     "segmentation": paste_rle,
                     "area": area,
                     "bbox": bbox,
@@ -201,6 +205,8 @@ class CocoDetectionCP():
                 }
                 # new_anns.append(new_ann)
                 self.add_anno_json(new_ann)
+                self.anno_counter += 1  # Ensure unique count
+                paste_count += 1
 
             # Annotation for the new combined scene and target masks/bboxes.
             # combine_ann = {
@@ -240,11 +246,12 @@ class CocoDetectionCP():
         # self.add_image(combine_data['image'])
         return combine_data
 
-    def load_example(self, index, scene=False, scene_index=5):
+    def load_example(self, index, scene=False, scene_index=5, gray=False):
         """
         Load an example with annotations.
         index:: (int) the index of the image from ids
         scene:: (bool) to load from an empty scene or not.
+        gray:: (bool) grayscale or not.
         """
         masks = []
         bboxes = []
@@ -267,7 +274,10 @@ class CocoDetectionCP():
                 bboxes.append(obj['bbox'] + [obj['category_id']] + [ix])
 
         image = cv2.imread(total_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if gray:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         #pack outputs into a dict
         output = {
@@ -288,7 +298,7 @@ class CocoDetectionCP():
         """
         return {
             "licenses": copy.deepcopy(self.c.coco.dataset['licenses']),
-            "categories": [copy.deepcopy(self.c.coco.cats[1])],
+            "categories": [copy.deepcopy(self.c.coco.cats)],
             "images": [],
             "annotations": []
         }
@@ -300,7 +310,8 @@ class CocoDetectionCP():
         @return:
         """
         with open(f_name, 'w') as j_file:
-            json.dump(self.json_base, j_file, indent=4)
+            # Can specify indent if needed
+            json.dump(self.json_base, j_file)
 
     def add_img_json(self, img):
         """
@@ -337,22 +348,30 @@ class CocoDetectionCP():
         # Check that the directory exists, otherwise make it.
         Path(out_dir).mkdir(parents=True, exist_ok=True)
 
-        out_path = os.path.join(out_dir, Path(f_name).name + ".jpg")
+        out_path = os.path.join(out_dir, Path(f_name).name)
         print(out_path)
         cv2.imwrite(out_path, img)
 
-    def synthesize(self, json_name="aug.json"):
+    def synthesize(self, out_dir="out_img/", json_name="aug.json", pct=None):
         """
         Method for creating the synthetic dataset from the scene images and
         other, annotated image set. Requires that class is initialised.
+        @param out_dir: (str) the output directory
+        @param json_name: (str) name of json file, with ext
+        @param pct: (float | None) percentage of scene images to transform
         @return: None
         """
-        for idx in range(len(self)):
+        if not pct:
+            pct = 1
+        elif pct > 1:
+            raise Exception("cannot have percentage exceed 1.")
+        n = int(pct*len(self))
+        for idx in range(n):
             # len(self) is the number of scene images
             img_data = self[idx]
             # Save image
             self.download_img(img=img_data['image'],
                               f_name=img_data['filename'],
-                              out_dir="out_img/")
+                              out_dir=out_dir)
 
         self.write_json(json_name)
