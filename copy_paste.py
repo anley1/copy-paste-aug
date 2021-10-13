@@ -193,31 +193,33 @@ class CopyPaste(A.DualTransform):
             }
 
         #select objects
-        objs_to_paste = np.random.choice(
-            range(0, n_objects), size=n_select, replace=False
-        )
+        # objs_to_paste = np.random.choice(
+        #     range(0, n_objects), size=n_select, replace=False
+        # )
 
         #take the bboxes
         if bboxes:
-            bboxes = [bboxes[idx] for idx in objs_to_paste]
+            # bboxes_new = [bboxes[idx] for idx in objs_to_paste]
+            bboxes_new = bboxes
             #the last label in bboxes is the index of corresponding mask
-            mask_indices = [bbox[-1] for bbox in bboxes]
+            mask_indices = [bbox[-1] for bbox in bboxes_new]
 
         # Select a random number of masks to paste
         # ceil(len(mask_indices)/3)
-        masks_to_paste = np.random.choice(
-            range(0, len(mask_indices)), size=n_select,
-            replace=False)
+        # masks_to_paste = np.random.choice(
+        #     range(0, len(mask_indices)), size=n_select,
+        #     replace=False)
 
-        sub_mask_indices = [idx for idx in masks_to_paste]
+        # sub_mask_indices = [idx for idx in masks_to_paste]
+        sub_mask_indices = mask_indices
 
         #create alpha by combining all the objects into
         #a single binary mask
         #masks = [masks[idx] for idx in mask_indices]
-        masks = [masks[idx] for idx in sub_mask_indices]
+        masks_new = [masks[idx] for idx in sub_mask_indices]
 
-        alpha = masks[0] > 0
-        for mask in masks[1:]:
+        alpha = masks_new[0] > 0
+        for mask in masks_new[1:]:
             alpha += mask > 0
 
         return {
@@ -225,8 +227,8 @@ class CopyPaste(A.DualTransform):
             "paste_img": image,
             "alpha": alpha,
             "paste_mask": None,
-            "paste_masks": masks,
-            "paste_bboxes": bboxes,
+            "paste_masks": masks_new,
+            "paste_bboxes": bboxes_new,
             "paste_keypoints": keypoints
         }
 

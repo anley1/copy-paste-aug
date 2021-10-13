@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 
 def edit_unique_anns():
-    with open("aug.json", 'r') as j_file:
+    with open("data/aug.json", 'r') as j_file:
         data = json.load(j_file)
 
     anno_len = len(data['annotations'])
@@ -25,7 +25,7 @@ def edit_unique_anns():
 
 
 def edit_jpg_ext():
-    with open("aug.json", 'r') as j_file:
+    with open("data/aug.json", 'r') as j_file:
         data = json.load(j_file)
 
     img_len = len(data['images'])

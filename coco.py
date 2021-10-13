@@ -153,8 +153,6 @@ class CocoDetectionCP():
             combine_data['paste_index'] = paste_idx
 
             # Get COCO ann format data
-            licenses = copy.deepcopy(self.c.coco.dataset['licenses'])
-            categories = copy.deepcopy(self.c.coco.dataset['categories'])
             im_meta = {
                 "id": scene_id,
                 "width": combine_data['image'].shape[1],
