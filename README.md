@@ -1,13 +1,30 @@
-# Scene-Copy-Paste
-Unofficial implementation of the copy-paste augmentation from [Simple Copy-Paste is a Strong Data Augmentation Method for Instance Segmentation](https://arxiv.org/abs/2012.07177v1), adapted to paste object instances from an image onto an empty scene. Inspiration from [Cut, Paste and Learn: Surprisingly Easy Synthesis for Instance Detection](https://arxiv.org/abs/1708.01642).
+# COCO Paste Augmentation
+Unofficial implementation of the copy-paste augmentation from [Simple Copy-Paste is a Strong Data Augmentation Method for Instance Segmentation](https://arxiv.org/abs/2012.07177v1), adapted to a) paste object instances from an image onto an empty scene for data synthesis and b) provide this functionality to as a dataset transform available to use with the albumentations library. This builds upon the albumentations implementation by by [conradry](https://github.com/conradry/copy-paste-aug). Inspiration from [Cut, Paste and Learn: Surprisingly Easy Synthesis for Instance Detection](https://arxiv.org/abs/1708.01642).
 
 The augmentation function is built to integrate easily with albumentations. An example for creating a compatible torchvision dataset is given for COCO. Core functionality for image, masks, and bounding boxes is finished; keypoints are not yet supported. In general, you can use the CopyPaste augmentation just as you would any other albumentations augmentation function. There are a few usage limitations of note.
 
 <figure>
-  <img src="./example.png"></img>
+  <img src="./synthesis-im.png"></img>
 </figure>
 
-## Usage Notes
+Cut-Paste data synthesis using clean image 'scene' (a) and mask instances from an (un-pictured)
+image coloured in (b). The resulting synthetic image in (c) is then used for training.
+
+## Synthesizer Usage Notes
+You can use the synthesize.py file to create synthetic data from clean backgrounds, called 'scenes', and
+with the annotations file (COCO JSON format) and image directory of a dataset with instance masks. The
+synthesize.py file is callable with the following parameters:
+
+```pct```: percentage of masks to randomly paste for each image
+
+```out_dir```: path to synthetic image output directory
+
+```json_name```: name of output COCO JSON annotation file for out_dir
+
+Additionally, you will need to update the synthesizer.py file with the relevant information
+
+
+## Albumentation Usage Notes
 
 1. BboxParams cannot have label_fields. To attach class labels to a bounding box, directly append it to the bounding box coordinates. (I.e. (x1, y1, x2, y2, class_id)).
 2. Bounding boxes passed to the CopyPaste augmentation must also include the index of the corresponding mask in the 'masks' list. (I.e. the bounding box looks like (x1, y1, x2, y2, class_id, mask_index)). An example is given for COCO.
